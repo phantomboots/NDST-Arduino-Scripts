@@ -1,4 +1,4 @@
-These Scripts are used in Arduinos microcontroller in various locations within the Phantom system, including Subsea and surface. They can be edited and uploaded via the Arduino IDE.
+These Scripts are used in Arduinos microcontroller in various locations within the NDST Tools, including Subsea and surface. They can be edited and uploaded via the Arduino IDE. The description below describe the functions of each script in the repositories, including the location of the Arduino device running the script.
 
 **phantomHeadingDepthLeakAndUmbTurns.ino**
 
