@@ -15,3 +15,8 @@ This script runs on an Arduinon Nano located with the Phantom's subsea can. The 
 These data are combines by the Arduino Nano, and output as a custom ASCII string, also at 9600-8-N-1. A MAX232 chip is used to convert from Arduino TTL serial levels to RS232 serial levels. These data are send up the tether and output over a data channel on the Phantom's 16 port MOXA. 
 
 
+**MiniZeus_DA_Converter.ino**
+
+This simple script reads analog voltages outputs from a MiniZeus Mark I camera control PCB. The cameras zoom, focus and aperture levels are output as voltages in the range of 0 to 5V. The script is used with the MiniZues Mark I controller PCBs that are used with both the Phantom and BOOTs.
+
+These values are read in via an Arduino UNO located with the Phantom's auxilliary control box; with BOOTS, an Arduino UNO is located in the factory supplied control enclosure from Insite Pacific. Analog readings in the 0 to 1023 scale are remapped to a value between 0 to 95%. In this context, 0 is aperture fully closed, 0 is fully zoomed out (widest view) _focus values are typically around 50%, consult Insite Pacific documentation for a better understanding of focus range_. These data are formatted as a custom ASCII string, and output as RS232 serial data strings at 9600-8-N-1 at a rate of about 8 Hz.
