@@ -20,3 +20,7 @@ These data are combines by the Arduino Nano, and output as a custom ASCII string
 This simple script reads analog voltages outputs from a MiniZeus Mark I camera control PCB. The cameras zoom, focus and aperture levels are output as voltages in the range of 0 to 5V. The script is used with the MiniZues Mark I controller PCBs that are used with both the Phantom and BOOTs.
 
 These values are read in via an Arduino UNO located with the Phantom's auxilliary control box; with BOOTS, an Arduino UNO is located in the factory supplied control enclosure from Insite Pacific. Analog readings in the 0 to 1023 scale are remapped to a value between 0 to 95%. In this context, 0 is aperture fully closed, 0 is fully zoomed out (widest view) _focus values are typically around 50%, consult Insite Pacific documentation for a better understanding of focus range_. These data are formatted as a custom ASCII string, and output as RS232 serial data strings at 9600-8-N-1 at a rate of about 8 Hz.
+
+**Joystick_Test_June27_2019_draft.ino**
+
+_This is a code stub, the intention of this code is to allow for an Arduino Joystick connected to BOOTS MiniZeus control box to be used to control the ROS Pan and Tilt Rotator on BOOTS. This rotator communicated via RS-485, and is accesible via the 4-port MOXA surface/subsea pairs on BOOTS. Documentation for the communications protocol for this unit can be found under the R Drive References and Specifications folder._
