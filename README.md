@@ -8,4 +8,10 @@ Leak detection is encoded by the Power Slab as a repeating voltage oscillation o
 
 Umbilical turns are calculated based on whether the Phantom's heading has 'wrapped around' (i.e. one full compass rotation) from 0 to 360. This is done by checking for a change in heading of +/- 90 degrees over one calculation cycles (i.e. less than 1 second). The Phantom's attitude cannot change this quickly in the real world, and this rapid variation between update cycles can thus be used to determine when the compass value rolls over 360. A check is made again depth reading; if the depth is less than 5 m, roll over could be due to the ship turning. This state is rejected, and only rotation while the vehicle is subsea is used as a valid state option. 
 
+**UM7_ReadIn_ZeusandMux.ino**
+
+This script runs on an Arduinon Nano located with the Phantom's subsea can. The script reads in Euler angles calculated from two UM7-LT IMUs boards (https://www.pololu.com/product/2763). One IMU is potted in Scotchcast and is affixed to the side of the of the Phantom's HD camera. The other IMU is located with within the Phantom's subsea can. Both IMUs communicate with the Arduino UNO using TTL serial, at a 9600-8-N-1. Pitch and roll values are read in at a rate of 1 Hz. 
+
+These data are combines by the Arduino Nano, and output as a custom ASCII string, also at 9600-8-N-1. A MAX232 chip is used to convert from Arduino TTL serial levels to RS232 serial levels. These data are send up the tether and output over a data channel on the Phantom's 16 port MOXA. 
+
 
