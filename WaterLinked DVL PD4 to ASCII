@@ -1,0 +1,153 @@
+//This script decodes a PD4 binary data string for an WaterLinked A125 DVL from binary to an ASCII, comma-separated value string. 
+//The string is output from the DVL at 9600-8-N-1, TTL logic levels. It is read into the Arduino, and specific bytes are decoded to the values they hold.
+//The decoded bytes are then compiled into a .CSV string, and sent out on a second serial instance. 
+//Must use an Arduino UNO for this script - AltSoftSerial not guaranteed to work on Arduino Nano.
+
+#include <Arduino.h>
+#include <AltSoftSerial.h>
+#include <math.h>
+
+#define BAUD_RATE 9600
+#define BUFFER_SIZE 48
+#define BEAM_ANGLE 22.5 // Beam angle in degrees for A125 DVL beams. 
+
+AltSoftSerial altSerial;
+String ascii_string = "";
+uint8_t buffer[BUFFER_SIZE];
+int bufferIndex = 0;
+
+int16_t xvel = 0;
+int16_t yvel = 0;
+int16_t zvel = 0;
+int16_t evel = 0;
+
+int16_t beam1 = 0;
+int16_t beam2 = 0;
+int16_t beam3 = 0;
+int16_t beam4 = 0;
+
+uint16_t alt1 = 0;
+uint16_t alt2 = 0;
+uint16_t alt3 = 0;
+uint16_t alt4 = 0;
+float alt_avg = 0;
+
+uint8_t bottom_code = 0;
+
+char hrs = 0;
+char mins = 0;
+char secs = 0;
+
+char hrsStr[3]; 
+char minsStr[3]; 
+char secsStr[3];
+
+
+int sspeed = 0;
+uint16_t msg_sum = 0;
+
+void setup() {
+    Serial.begin(BAUD_RATE);
+    altSerial.begin(BAUD_RATE); //On Arduino UNO, Tx is Pin 9, RX is Pin 8.
+}
+
+void loop() {
+    if (altSerial.available()) {
+        uint8_t byte = altSerial.read();
+        
+        buffer[bufferIndex] = byte;
+        bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;
+        
+        // Look for start sequence 0x7D followed by 0x00 as bytes 0 and 1
+        if (bufferIndex == 2 && buffer[0] == 0x7D && buffer[1] == 0x00) {
+            
+            // Read the next 46 bytes into the buffer
+            int count = 2;
+            while (count < 48) {
+                if (altSerial.available()) {
+                    buffer[count] = altSerial.read();
+                    count++;
+                }
+            }
+            bottomVelocities();
+            bottomRange();
+            statusBottomLock();
+            timeFirstPing();
+            soundSpeed();
+            //crc_decode();
+            
+            // Concatenate global values into CSV format
+           ascii_string = "$A125DVL," + String(xvel) + "," + String(yvel) + "," + String(zvel) + "," + String(evel) + "," + String(beam1) + "," +String(beam2) + "," +String(beam3) + "," +String(beam4) + "," +
+                         String(alt_avg) + "," + String(hrsStr) + ":" + String(minsStr) + ":" + String(secsStr) + "," + String(sspeed);
+            
+            // Output the CSV string via Serial
+            Serial.println(ascii_string);
+            
+            // Empty the buffer
+            memset(buffer, 0, BUFFER_SIZE);
+        }
+    }
+}
+
+//Read bottom velocities (units are mm/s) for the X, Y and Z planes. E is the net velocity vector, in 3D space.
+void bottomVelocities() {
+    xvel = ((buffer[6] << 8) | buffer[5]); 
+    yvel = ((buffer[8] << 8) | buffer[7]) ;
+    zvel = ((buffer[10] << 8) | buffer[9]) ;
+    evel = ((buffer[12] << 8) | buffer[11]) ;
+    
+    // Serial.print("Decoded Velocities: ");
+    // Serial.print(xvel);
+    // Serial.print(", ");
+    // Serial.print(yvel);
+    // Serial.print(", ");
+    // Serial.print(zvel);
+    // Serial.print(", ");
+    // Serial.println(evel);
+}
+
+//Read bottom range values, from each of the four beams (units are cm). Calculate altitude using sine(22.5°).
+void bottomRange() {
+    beam1 = (buffer[14] << 8) | buffer[13];
+    beam2 = (buffer[16] << 8) | buffer[15];
+    beam3 = (buffer[18] << 8) | buffer[17];
+    beam4 = (buffer[20] << 8) | buffer[19];
+
+    alt_avg = (beam1 + beam2 + beam3 + beam4) / 4;
+    
+    // Serial.print("Averaged Altitude: ");
+    // Serial.println(alt_avg);
+}
+
+//Read the bottom lock status. A value of 0 means bottom lock is OK, and other values indicate a bottom lock error code.
+void statusBottomLock() {
+    bottom_code = buffer[21];
+    // Serial.print("Bottom Lock Status: ")
+    // Serial.println(buffer[21] == 0 ? "OK" : "BAD_LOCK");
+}
+
+//Read the time of the first ping, in the form HH:MM:SS. No date information included.
+void timeFirstPing() {
+    hrs = buffer[35];
+    mins = buffer[36];
+    secs = buffer[37];
+    
+    snprintf(hrsStr, sizeof(hrsStr), "%02d", hrs);
+    snprintf(minsStr, sizeof(minsStr), "%02d", mins);
+    snprintf(secsStr, sizeof(secsStr), "%02d", secs);
+    
+    // Serial.print("Time First Ping: ");
+    // Serial.print(hrsStr);
+    // Serial.print(":");
+    // Serial.print(minsStr);
+    // Serial.print(":");
+    // Serial.println(secsStr);
+}
+
+//Read the sound speed, units of m/s. Default is 1453 m/s.
+void soundSpeed() {
+    sspeed = (buffer[42] << 8) | buffer[41];
+    
+    // Serial.print("Sound Speed: ");
+    // Serial.println(sspeed);
+}
