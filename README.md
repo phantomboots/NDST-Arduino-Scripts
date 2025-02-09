@@ -24,3 +24,11 @@ These values are read in via an Arduino UNO located with the Phantom's auxilliar
 **Joystick_Test_June27_2019_draft.ino**
 
 _This is a code stub, the intention of this code is to allow for an Arduino Joystick connected to BOOTS MiniZeus control box to be used to control the ROS Pan and Tilt Rotator on BOOTS. This rotator communicated via RS-485, and is accesible via the 4-port MOXA surface/subsea pairs on BOOTS. Documentation for the communications protocol for this unit can be found under the R Drive References and Specifications folder._
+
+**EPOD Temp, Pressure, Humidity Sensor**
+
+This script reads an Adafruit BME280 temp, pressure and humidity sensor over the i2c bus (default i2c address 0x77). It reads temp in degrees celsius, pressure is in millibars, humidity is percent humidity. The wiring diagram for a generic Arduino UNO is shown below - note that the Arduino Nano that is installed in both the BOOTS and YellowEye EPODS to support this function use pins A4 (SDA pin) and A5 (SCL pin) instead. This requires the <Wire.h> library.
+
+This string is concatenated into an ASCII .CSV string, and output at 1Hz on the Arduino hardware serial inteface (Pin 1 for Tx output from the Arduino board). The string terminates with a <CR><LF>
+
+![adafruit_products_BME280_arduino_I2C_breadboard_bb](https://github.com/user-attachments/assets/36918e5b-8202-4312-813d-7e0ca6c4d636)
