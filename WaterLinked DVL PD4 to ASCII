@@ -26,10 +26,10 @@ int16_t beam2 = 0;
 int16_t beam3 = 0;
 int16_t beam4 = 0;
 
-uint16_t alt1 = 0;
-uint16_t alt2 = 0;
-uint16_t alt3 = 0;
-uint16_t alt4 = 0;
+float alt1 = 0;
+float alt2 = 0;
+float alt3 = 0;
+float alt4 = 0;
 float alt_avg = 0;
 
 uint8_t bottom_code = 0;
@@ -52,8 +52,8 @@ void setup() {
 }
 
 void loop() {
-    if (altSerial.available()) {
-        uint8_t byte = altSerial.read();
+    if (Serial.available()) {
+        uint8_t byte = Serial.read();
         
         buffer[bufferIndex] = byte;
         bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;
@@ -64,8 +64,8 @@ void loop() {
             // Read the next 46 bytes into the buffer
             int count = 2;
             while (count < 48) {
-                if (altSerial.available()) {
-                    buffer[count] = altSerial.read();
+                if (Serial.available()) {
+                    buffer[count] = Serial.read();
                     count++;
                 }
             }
@@ -81,7 +81,7 @@ void loop() {
                          String(alt_avg) + "," + String(hrsStr) + ":" + String(minsStr) + ":" + String(secsStr) + "," + String(sspeed);
             
             // Output the CSV string via Serial
-            Serial.println(ascii_string);
+            altSerial.println(ascii_string);
             
             // Empty the buffer
             memset(buffer, 0, BUFFER_SIZE);
@@ -95,35 +95,27 @@ void bottomVelocities() {
     yvel = ((buffer[8] << 8) | buffer[7]) ;
     zvel = ((buffer[10] << 8) | buffer[9]) ;
     evel = ((buffer[12] << 8) | buffer[11]) ;
-    
-    // Serial.print("Decoded Velocities: ");
-    // Serial.print(xvel);
-    // Serial.print(", ");
-    // Serial.print(yvel);
-    // Serial.print(", ");
-    // Serial.print(zvel);
-    // Serial.print(", ");
-    // Serial.println(evel);
 }
 
-//Read bottom range values, from each of the four beams (units are cm). Calculate altitude using sine(22.5°).
+//Read bottom range values, from each of the four beams (units are cm). Calculate altitude using cosine(22.5°).
 void bottomRange() {
     beam1 = (buffer[14] << 8) | buffer[13];
     beam2 = (buffer[16] << 8) | buffer[15];
     beam3 = (buffer[18] << 8) | buffer[17];
     beam4 = (buffer[20] << 8) | buffer[19];
 
-    alt_avg = (beam1 + beam2 + beam3 + beam4) / 4;
+    float cosTheta = cos(BEAM_ANGLE * PI / 180.0);
+    alt1 = (beam1 * cosTheta) * 0.001;
+    alt2 = (beam2 * cosTheta) * 0.001;
+    alt3 = (beam3 * cosTheta) * 0.001;
+    alt4 = (beam4 * cosTheta) * 0.001;
+    alt_avg = (alt1 + alt2 + alt3 + alt4) / 4.0;
     
-    // Serial.print("Averaged Altitude: ");
-    // Serial.println(alt_avg);
 }
 
 //Read the bottom lock status. A value of 0 means bottom lock is OK, and other values indicate a bottom lock error code.
 void statusBottomLock() {
     bottom_code = buffer[21];
-    // Serial.print("Bottom Lock Status: ")
-    // Serial.println(buffer[21] == 0 ? "OK" : "BAD_LOCK");
 }
 
 //Read the time of the first ping, in the form HH:MM:SS. No date information included.
@@ -135,19 +127,10 @@ void timeFirstPing() {
     snprintf(hrsStr, sizeof(hrsStr), "%02d", hrs);
     snprintf(minsStr, sizeof(minsStr), "%02d", mins);
     snprintf(secsStr, sizeof(secsStr), "%02d", secs);
-    
-    // Serial.print("Time First Ping: ");
-    // Serial.print(hrsStr);
-    // Serial.print(":");
-    // Serial.print(minsStr);
-    // Serial.print(":");
-    // Serial.println(secsStr);
 }
 
 //Read the sound speed, units of m/s. Default is 1453 m/s.
 void soundSpeed() {
     sspeed = (buffer[42] << 8) | buffer[41];
-    
-    // Serial.print("Sound Speed: ");
-    // Serial.println(sspeed);
+
 }
