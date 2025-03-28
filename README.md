@@ -33,7 +33,7 @@ This string is concatenated into an ASCII .CSV string, and output at 1Hz on the 
 
 ![adafruit_products_BME280_arduino_I2C_breadboard_bb](https://github.com/user-attachments/assets/36918e5b-8202-4312-813d-7e0ca6c4d636)
 
-**WaterLinke DVL A125 PD4 to ASCII **
+**WaterLinke DVL A125 PD4 to ASCII**
 
 This script reads in a PD4 formatted binary data format for DVL data, converts the 47 byte long message to ASCII text, and outputs a commma seperated value string. The altitude of each of the DVL's four beam are 1reports (cm) is calculated, and an average altitudes (average of all four beams) is calcualted as well. Data is output from the A125 DVL at 9600-8-N-
 
