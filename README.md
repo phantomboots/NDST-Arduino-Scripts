@@ -32,3 +32,11 @@ This script reads an Adafruit BME280 temp, pressure and humidity sensor over the
 This string is concatenated into an ASCII .CSV string, and output at 1Hz on the Arduino hardware serial inteface (Pin 1 for Tx output from the Arduino board). The string terminates with a <CR><LF>
 
 ![adafruit_products_BME280_arduino_I2C_breadboard_bb](https://github.com/user-attachments/assets/36918e5b-8202-4312-813d-7e0ca6c4d636)
+
+**WaterLinke DVL A125 PD4 to ASCII **
+
+This script reads in a PD4 formatted binary data format for DVL data, converts the 47 byte long message to ASCII text, and outputs a commma seperated value string. The altitude of each of the DVL's four beam are 1reports (cm) is calculated, and an average altitudes (average of all four beams) is calcualted as well. Data is output from the A125 DVL at 9600-8-N-
+
+Velocity (in the DVL's local frame of reference) in the X (Fwd/Aft), Y (Port/Stbd) and Z (Up/down) axes. An 'E Velocity' value is also calculated, which is the standard deviation of the velocity in all 3 axes. Velocity readings are all in units of mm/s. The DVL's time of ping, bottom lock status, and internal sound speed are also output in the comma seperated values string. 
+
+Data are output as fast as the Arduino unit can process the incoming binary data - it practice, this is about 4 Hz on an Arduino Uno. This arduino unit is located inside the YellowEye SCU.
