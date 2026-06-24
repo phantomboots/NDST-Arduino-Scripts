@@ -1,0 +1,145 @@
+// Optimized Arduino sketch for decoding WaterLinked A125 DVL PD4 binary data
+// Added exponential moving average filtering for x, y, z velocities
+// Removed timeFirstPing() and all references for faster execution
+// Optimized memory usage by replacing String with fixed-size character buffer
+
+#include <Arduino.h>
+#include <math.h>
+
+#define BAUD_RATE 9600
+#define BUFFER_SIZE 48
+#define BEAM_ANGLE 22.5   // Beam angle in degrees for A125 DVL beams
+#define CSV_BUFFER 128    // Size of output CSV buffer
+
+char ascii_buffer[CSV_BUFFER];
+uint8_t buffer[BUFFER_SIZE];
+int bufferIndex = 0;
+
+int16_t xvel = 0;
+int16_t yvel = 0;
+int16_t zvel = 0;
+int16_t evel = 0;
+
+// Exponential Moving Average (EMA) filtered velocities
+float xvel_filt = 0.0f;
+float yvel_filt = 0.0f;
+float zvel_filt = 0.0f;
+
+bool filterInitialized = false;
+const float alpha = 0.2f;
+
+int16_t beam1 = 0;
+int16_t beam2 = 0;
+int16_t beam3 = 0;
+int16_t beam4 = 0;
+
+float alt1 = 0;
+float alt2 = 0;
+float alt3 = 0;
+float alt4 = 0;
+float alt_avg = 0;
+float cosTheta = cos(BEAM_ANGLE * PI / 180.0);
+
+uint8_t bottom_code = 0;
+
+int sspeed = 0;
+uint16_t msg_sum = 0;
+
+void setup() {
+    Serial1.begin(BAUD_RATE); // Input serial connection (DVL data)
+    Serial2.begin(BAUD_RATE); // Output serial connection (CSV data)
+}
+
+void loop() {
+    if (Serial1.available()) {
+        uint8_t byte = Serial1.read();
+        buffer[bufferIndex] = byte;
+        bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;
+
+        // Look for start sequence 0x7D followed by 0x00
+        if (bufferIndex == 2 && buffer[0] == 0x7D && buffer[1] == 0x00) {
+
+            int count = 2;
+
+            while (count < BUFFER_SIZE) {
+                if (Serial1.available()) {
+                    buffer[count++] = Serial1.read();
+                }
+            }
+
+            bottomVelocities();
+            updateVelocityAverage();
+            bottomRange();
+            statusBottomLock();
+            soundSpeed();
+
+            snprintf(ascii_buffer, CSV_BUFFER,
+                     "$A125DVL,%d,%d,%d,%d,%d,%d,%d,%d,%.3f,%d",
+                     (int16_t)roundf(xvel_filt),
+                     (int16_t)roundf(yvel_filt),
+                     (int16_t)roundf(zvel_filt),
+                     evel,
+                     beam1,
+                     beam2,
+                     beam3,
+                     beam4,
+                     alt_avg,
+                     sspeed);
+
+            Serial2.println(ascii_buffer);
+
+            memset(buffer, 0, BUFFER_SIZE);
+        }
+    }
+}
+
+// Decode bottom velocities (mm/s)
+inline void bottomVelocities() {
+    xvel = (int16_t)((buffer[6] << 8) | buffer[5]);
+    yvel = (int16_t)((buffer[8] << 8) | buffer[7]);
+    zvel = (int16_t)((buffer[10] << 8) | buffer[9]);
+    evel = (int16_t)((buffer[12] << 8) | buffer[11]);
+}
+
+// Update exponential moving average filter
+inline void updateVelocityAverage() {
+
+    // Initialize filter with first valid sample
+    if (!filterInitialized) {
+        xvel_filt = (float)xvel;
+        yvel_filt = (float)yvel;
+        zvel_filt = (float)zvel;
+        filterInitialized = true;
+        return;
+    }
+
+    xvel_filt += alpha * ((float)xvel - xvel_filt);
+    yvel_filt += alpha * ((float)yvel - yvel_filt);
+    zvel_filt += alpha * ((float)zvel - zvel_filt);
+}
+
+// Decode bottom ranges and calculate altitude (m)
+inline void bottomRange() {
+
+    beam1 = (buffer[14] << 8) | buffer[13];
+    beam2 = (buffer[16] << 8) | buffer[15];
+    beam3 = (buffer[18] << 8) | buffer[17];
+    beam4 = (buffer[20] << 8) | buffer[19];
+
+    alt1 = (beam1 * cosTheta) * 0.001f;
+    alt2 = (beam2 * cosTheta) * 0.001f;
+    alt3 = (beam3 * cosTheta) * 0.001f;
+    alt4 = (beam4 * cosTheta) * 0.001f;
+
+    alt_avg = (alt1 + alt2 + alt3 + alt4) / 4.0f;
+}
+
+// Decode bottom lock status
+inline void statusBottomLock() {
+    bottom_code = buffer[21];
+}
+
+// Decode sound speed (m/s)
+inline void soundSpeed() {
+    sspeed = (buffer[42] << 8) | buffer[41];
+}
