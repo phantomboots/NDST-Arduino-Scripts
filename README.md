@@ -33,10 +33,27 @@ This string is concatenated into an ASCII .CSV string, and output at 1Hz on the 
 
 ![adafruit_products_BME280_arduino_I2C_breadboard_bb](https://github.com/user-attachments/assets/36918e5b-8202-4312-813d-7e0ca6c4d636)
 
-**WaterLinke DVL A125 PD4 to ASCII**
+**WaterLinked DVL A125 PD4 to ASCII_DEPRECATED**
 
-This script reads in a PD4 formatted binary data format for DVL data, converts the 47 byte long message to ASCII text, and outputs a commma seperated value string. The altitude of each of the DVL's four beam are 1reports (cm) is calculated, and an average altitudes (average of all four beams) is calcualted as well. Data is output from the A125 DVL at 9600-8-N-
+This script reads in a PD4 formatted binary data format for DVL data, converts the 47 byte long message to ASCII text, and outputs a commma seperated value string. The altitude of each of the DVL's four beam are 1reports (cm) is calculated, and an average altitudes (average of all four beams) is calcualted as well. Data is output from the A125 DVL at 9600-8-N-1
 
 Velocity (in the DVL's local frame of reference) in the X (Fwd/Aft), Y (Port/Stbd) and Z (Up/down) axes. An 'E Velocity' value is also calculated, which is the standard deviation of the velocity in all 3 axes. Velocity readings are all in units of mm/s. The DVL's time of ping, bottom lock status, and internal sound speed are also output in the comma seperated values string. 
 
 Data are output as fast as the Arduino unit can process the incoming binary data - it practice, this is about 4 Hz on an Arduino Uno. This arduino unit is located inside the YellowEye SCU.
+
+**WaterLinked A125 DVL PD4 to ASCII**
+
+This script reads in a PD4 formatted binary data format from the WaterLinked A125 model DVL, converts the 47 byte long message to ASCII text, and outputs a commma seperated value string. The altitude that each of the DVL's four beam reports (cm) is calculated, and an average altitudes (average of all four beams) is calcualted as well. Data is output from the A125 DVL at 9600-8-N-1. The code is run on a Teensy 4.0 microcontroller, with contains a floating point processor.
+
+Velocity (in the DVL's local frame of reference) in the X (Fwd/Aft), Y (Port/Stbd) and Z (Up/down) axes. An 'E Velocity' value is also calculated, which is the standard deviation of the velocity in all 3 axes. Velocity readings are all in units of mm/s. The DVL's time of ping, bottom lock status, and internal sound speed are also output in the comma seperated values string, for reference purposes. The velocity reading are passed through an exponential filter, with an Alpha value of 0.2. The full output data string is formatted as follows:
+
+$A125DVL,xvel,yvel,zvel,evel,beam1,beam2,beam3,beam4,alt_avg,sspeed
+
+The fields and their values are as shown below:
+
+<img width="652" height="587" alt="image" src="https://github.com/user-attachments/assets/0d6631d5-0f01-4314-a057-84838e90a394" />
+
+
+Data are output as fast as the Teensy unit can process the incoming binary data - it practice, this is about 4 Hz on the Teensy. This arduino unit is located inside the YellowEye SCU.
+
+
